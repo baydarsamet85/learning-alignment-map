@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The alignment map — CELT · Purdue University Fort Wayne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ---- Purdue Fort Wayne brand: Old Gold + Black, confirmed hex; Summit blue approximated (see note) ---- */
+    --gold:#CFB991; --gold-deep:#8E7238; --black:#000000; --ink:#1b1b1b;
+    --gray-90:#2c2c2c; --gray-70:#63666A; --gray-40:#97999B; --gray-20:#BBBCBC; --gray-08:#e9e8e5; --paper:#ffffff;
+    --summit:#00629B;
+
+    --verb:#2c6e31;   --verb-bg:#e4f0e2;   --verb-ink:#1d4a21;
+    --goal:#8E7238;   --goal-bg:#f4ecd8;   --goal-ink:#5b4522;
+    --method:#00629B; --method-bg:#dcebf5; --method-ink:#0b3f5c;
+    --context:#63666A; --context-bg:#ececea; --context-ink:#3a3a35;
+    --break:#a32d2d; --break-bg:#fbe9e9;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:"Inter",system-ui,sans-serif; font-size:15px; line-height:1.5; overflow:hidden;}
+  h1,h2,h3{font-family:"Source Serif 4",Georgia,serif; font-weight:500; margin:0;}
+
+  .app{display:flex; height:100vh; height:100dvh;}
+
+  .rail{width:230px; flex-shrink:0; background:var(--black); color:var(--gray-20); display:flex; flex-direction:column; padding:20px 0;}
+  .rail-brand{padding:0 20px 18px; border-bottom:1px solid #2a2a2a; margin-bottom:14px;}
+  .rail-brand .pfw{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; letter-spacing:.06em; font-size:13px; color:var(--paper); text-transform:uppercase; line-height:1.25;}
+  .rail-brand .pfw b{color:var(--gold);}
+  .rail-brand .celt{font-family:"Inter",sans-serif; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--gray-40); margin-top:5px;}
+  .rail nav{flex:1; overflow-y:auto;}
+  .rail-item{display:flex; align-items:center; gap:10px; padding:10px 20px; cursor:pointer; border-left:3px solid transparent; font-size:13px; color:var(--gray-20); transition:.15s;}
+  .rail-item .dot{width:6px; height:6px; border-radius:50%; background:var(--gray-70); flex-shrink:0;}
+  .rail-item:hover{background:#161616; color:var(--paper);}
+  .rail-item.active{border-left-color:var(--gold); background:#161616; color:var(--paper); font-weight:500;}
+  .rail-item.active .dot{background:var(--gold);}
+  .rail-foot{padding:14px 20px 0; border-top:1px solid #2a2a2a; margin-top:12px;}
+  .railfoot-title{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--gray-40); font-weight:700; margin:0 0 10px;}
+  .rail-foot button{width:100%; font-family:"Inter",sans-serif; font-size:13px; letter-spacing:.04em; color:var(--gray-40); background:none; border:1px solid #383838; padding:8px 10px; border-radius:4px; cursor:pointer; text-align:left;}
+  .rail-foot button:hover{border-color:var(--gold); color:var(--gold);}
+
+  @media(max-width:860px){
+    .app{flex-direction:column;}
+    .rail{width:100%; flex-direction:row; align-items:center; padding:0; height:52px; overflow:hidden;}
+    .rail-brand{border-bottom:none; border-right:1px solid #2a2a2a; padding:0 14px; margin:0; display:flex; flex-direction:column; justify-content:center; height:100%; flex-shrink:0;}
+    .rail-brand .celt{margin-top:1px;}
+    .rail nav{display:flex; overflow-x:auto; height:100%; flex:1;}
+    .rail-item{border-left:none; border-bottom:3px solid transparent; white-space:nowrap; padding:0 14px; height:100%;}
+    .rail-item.active{border-left:none; border-bottom-color:var(--gold);}
+    .rail-foot{display:none;}
+  }
+
+  .stage{flex:1; display:flex; flex-direction:column; min-width:0; background:var(--gray-08);}
+  .stage-top{display:flex; align-items:center; justify-content:space-between; padding:12px 28px; border-bottom:1px solid var(--gray-20); background:var(--paper); flex-shrink:0;}
+  .crumb{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--gray-70);}
+  .crumb b{color:var(--ink);}
+  .bench-btn{font-family:"Inter",sans-serif; font-size:13px; font-weight:500; color:var(--method-ink); background:var(--method-bg); border:none; padding:7px 13px; border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:6px;}
+  .bench-btn:hover{background:#cfe3f0;}
+
+  .viewport{flex:1; overflow-y:auto; display:flex; justify-content:center; padding:36px 24px 20px;}
+  .slide{max-width:700px; width:100%; display:none;}
+  .slide.active{display:block; animation:rise .35s cubic-bezier(.2,.7,.3,1);}
+  @keyframes rise{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+  .stage-foot{display:flex; align-items:center; justify-content:space-between; padding:14px 28px; border-top:1px solid var(--gray-20); background:var(--paper); flex-shrink:0; gap:16px;}
+  .progressbar{flex:1; height:4px; background:var(--gray-08); border-radius:2px; overflow:hidden;}
+  .progressbar i{display:block; height:100%; background:var(--gold-deep); width:0%; transition:width .3s ease;}
+  .navbtns{display:flex; gap:8px; flex-shrink:0;}
+  .navbtn{font-family:"Inter",sans-serif; font-size:13px; font-weight:500; padding:9px 16px; border-radius:5px; cursor:pointer; border:1px solid var(--gray-20); background:var(--paper); color:var(--ink);}
+  .navbtn:hover{border-color:var(--gray-70);}
+  .navbtn.primary{background:var(--black); color:var(--gold); border-color:var(--black);}
+  .navbtn.primary:hover{background:#242424;}
+  .navbtn:disabled{opacity:.35; cursor:default;}
+
+  .hero{text-align:left; padding-top:6vh;}
+  .hero .kicker{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-deep); margin-bottom:10px; font-weight:700;}
+  .hero h1{font-size:26px; line-height:1.08; letter-spacing:-.01em;}
+  .hero h1 em{font-style:italic; color:var(--gray-70);}
+  .hero .thesis{margin:20px 0 0; padding:14px 17px; background:var(--paper); border-left:3px solid var(--gold-deep); font-family:"Source Serif 4",serif; font-size:18px; line-height:1.55; border-radius:0 5px 5px 0; box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .hero .cta{margin-top:26px;}
+
+  .ovhead{margin-bottom:20px;}
+  .ovhead p.lbl{margin:0 0 4px;}
+  .ovgrid{display:flex; flex-direction:column; gap:12px;}
+  .ovcard{display:flex; gap:16px; align-items:flex-start; background:var(--paper); border:1px solid var(--gray-20); border-radius:8px; padding:16px 18px; box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .ovcard .ovn{font-family:"Barlow Semi Condensed",sans-serif; font-size:26px; font-weight:700; color:var(--gold-deep); line-height:1; width:38px; flex-shrink:0;}
+  .ovcard h2{font-size:26px; margin-bottom:3px;}
+  .ovcard p{margin:0; font-size:13px; color:var(--gray-70); line-height:1.45;}
+  .ovarrow{text-align:center; color:var(--gray-40); font-size:13px; margin:-4px 0;}
+
+  .stagehead{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
+  .stagehead .n{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:15px; color:#fff; width:34px; height:34px; border-radius:5px; display:flex; align-items:center; justify-content:center;}
+  .s1 .n{background:var(--context);} .s2 .n{background:var(--goal-ink);} .s3 .n{background:var(--method);} .s4 .n{background:var(--verb);}
+  .stagehead h2{font-size:26px;}
+  .stagesub{font-size:13px; color:var(--gray-70); margin:0 0 16px 46px;}
+  .lede{font-size:15px; line-height:1.6; margin:0 0 16px;}
+
+  .steps{display:flex; flex-direction:column; gap:8px;}
+  .step{border-bottom:1px dashed var(--gray-20); padding-bottom:10px;}
+  .step:last-child{border-bottom:none; padding-bottom:0;}
+  .step-content{display:none; padding-top:10px;}
+  .step-content.shown{display:block; animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);}}
+  .reveal-btn{align-self:flex-start; font-family:"Inter",sans-serif; font-size:13px; font-weight:500; background:var(--paper); border:1px solid var(--gray-20); color:var(--ink); padding:9px 14px; border-radius:5px; cursor:pointer; display:flex; align-items:center; gap:7px; transition:.15s;}
+  .reveal-btn:hover{border-color:var(--gray-70); background:var(--gray-08);}
+  .reveal-btn .ic{font-size:13px; transition:transform .2s; color:var(--gold-deep);}
+  .reveal-btn.done{color:var(--gray-70); border-style:dashed;}
+  .reveal-btn.done .ic{transform:rotate(90deg);}
+
+  .cols{display:grid; grid-template-columns:1fr; gap:12px 20px;}
+  @media(min-width:600px){ .cols{grid-template-columns:1fr 1fr;} }
+  .cols.three{grid-template-columns:1fr;}
+  @media(min-width:600px){ .cols.three{grid-template-columns:1fr 1fr 1fr;} }
+  ul{margin:0; padding:0; list-style:none;}
+  li{padding:3px 0 3px 13px; position:relative; line-height:1.45; font-size:13px;}
+  li::before{content:""; position:absolute; left:0; top:10px; width:4px; height:4px; background:var(--gray-40); border-radius:50%;}
+  .tag{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--method-ink); font-weight:700;}
+  .minilbl{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--gray-70); margin:0 0 6px; font-weight:700;}
+
+  .assembly{border:1px solid var(--gray-20); border-radius:6px; padding:14px 16px; background:var(--paper);}
+  .chip{display:inline; padding:2px 5px; border-radius:3px; font-weight:600; box-decoration-break:clone; -webkit-box-decoration-break:clone; line-height:2;}
+  .c-verb{background:var(--verb-bg); color:var(--verb-ink); border-bottom:1.5px solid var(--verb);}
+  .c-goal{background:var(--goal-bg); color:var(--goal-ink); border-bottom:1.5px solid var(--goal);}
+  .c-method{background:var(--method-bg); color:var(--method-ink); border-bottom:1.5px solid var(--method);}
+  .c-context{background:var(--context-bg); color:var(--context-ink); border-bottom:1.5px solid var(--context);}
+  .sentence{font-size:15px; line-height:2.15; margin:0;}
+
+  .key{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:12px; padding-top:10px; border-top:1px dashed var(--gray-20);}
+  @media(min-width:600px){ .key{grid-template-columns:repeat(4,1fr);} }
+  .key .k{border-top:2.5px solid; padding-top:5px;}
+  .key .k.v{border-color:var(--verb);} .key .k.g{border-color:var(--goal);}
+  .key .k.m{border-color:var(--method);} .key .k.c{border-color:var(--context);}
+  .key .q{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; font-weight:700; display:block; margin-bottom:2px;}
+  .key .k.v .q{color:var(--verb);} .key .k.g .q{color:var(--goal);}
+  .key .k.m .q{color:var(--method);} .key .k.c .q{color:var(--context);}
+  .key p{margin:0; font-size:13px; color:var(--gray-70); line-height:1.4;}
+
+  .bloomladder{display:flex; gap:6px; margin-top:14px; flex-wrap:wrap;}
+  .bloomladder .bl{flex:1; min-width:82px; text-align:center; padding:8px 6px; border-radius:5px; font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; font-weight:700; letter-spacing:.02em;}
+
+  /* embedded self-check question, sits with the worked example (not gated) */
+  .checkq{margin-top:10px; padding-top:9px; border-top:1px dashed var(--gray-20);}
+  .checkq .cq-label{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--gold-deep); font-weight:700; margin:0 0 3px;}
+  .checkq p{margin:0; font-size:13px; font-style:italic; color:var(--ink); font-family:"Source Serif 4",serif; line-height:1.45;}
+
+  /* closing question on the synthesis screen */
+  .closingq{margin-top:20px; border:1px solid var(--gold-deep); border-radius:7px; padding:15px 17px; background:var(--paper);}
+  .closingq .cq-label{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.07em; text-transform:uppercase; color:var(--gold-deep); font-weight:700; margin:0 0 6px;}
+  .closingq .q{margin:0 0 12px; font-size:15px; line-height:1.5; font-family:"Source Serif 4",serif;}
+  .seamjump{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media(max-width:520px){ .seamjump{grid-template-columns:1fr;} }
+  .seamjump button{font-family:"Inter",sans-serif; font-size:13px; font-weight:500; padding:12px 14px; border-radius:5px; border:1px solid var(--gray-20); background:var(--gray-08); color:var(--ink); cursor:pointer; min-height:56px; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.35;}
+  .seamjump button:hover{border-color:var(--gold-deep); background:var(--goal-bg);}
+
+  .broken{background:var(--break-bg); border-left:2.5px solid var(--break); padding:10px 13px; border-radius:0 5px 5px 0;}
+  .broken .h{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--break); font-weight:700;}
+  .broken .s{font-size:15px; text-decoration:line-through; text-decoration-color:rgba(163,45,45,.45); color:#7d3030; margin:4px 0 5px;}
+  .broken p{margin:0; font-size:13px; color:#6b3737; line-height:1.45;}
+
+  /* caution note — amber, visually distinct from the red "broken example" box: caution vs. wrong */
+  .caution{background:var(--goal-bg); border-left:2.5px solid var(--goal-ink); padding:10px 13px; border-radius:0 5px 5px 0; margin-top:12px;}
+  .caution .h{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--goal-ink); font-weight:700;}
+  .caution p{margin:4px 0 0; font-size:13px; color:#5b4522; line-height:1.5;}
+
+  /* activity-function diagram: build -> rehearse -> check, shown as a spatial map before the gated detail (dual coding) */
+  .actflow{display:flex; align-items:stretch; gap:8px; margin:6px 0 18px;}
+  @media(max-width:480px){ .actflow{flex-direction:column;} }
+  .actflow .fbox{flex:1; border-radius:6px; padding:11px 13px;}
+  .actflow .fbox b{display:block; font-family:"Source Serif 4",serif; font-size:15px; margin-bottom:2px; font-weight:500;}
+  .actflow .fbox span{font-size:13px; line-height:1.4; display:block;}
+  .actflow .arrow{align-self:center; color:var(--gray-40); font-size:15px; flex-shrink:0;}
+  .actflow .f1{background:#eef5ec; border:1px solid #b7d9b9; color:#2c4a2e;}
+  .actflow .f2{background:#cfe6d1; border:1px solid #8fc492; color:#1d4a21;}
+  .actflow .f3{background:var(--verb); border:1px solid var(--verb); color:#fff;}
+
+  .yourshead{margin-bottom:16px;}
+  .prompt-box{border:1px solid var(--gold-deep); border-radius:7px; padding:16px 18px; background:var(--paper); box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .prompt-box .stamp{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.07em; text-transform:uppercase; color:var(--gold-deep); font-weight:700; margin:0 0 8px;}
+  .prompt-box .q{margin:0 0 14px; font-size:15px; line-height:1.55; font-family:"Source Serif 4",serif;}
+  .fld{margin-bottom:0;}
+  .fld label{display:block; font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--gray-70); margin-bottom:5px; font-weight:700;}
+  .fld textarea{width:100%; border:none; border-bottom:1.5px solid var(--gray-20); background:transparent; font-family:"Source Serif 4",serif; font-size:15px; padding:6px 2px; color:var(--ink); font-style:italic; resize:none; overflow:hidden; white-space:pre-wrap; overflow-wrap:break-word; line-height:1.4; display:block;}
+  .fld textarea:focus{outline:none; border-bottom-color:var(--gold-deep);}
+  .fld textarea::placeholder{color:#b7b6ae; font-style:italic;}
+  .slots{display:grid; grid-template-columns:1fr; gap:14px;}
+  @media(min-width:520px){ .slots{grid-template-columns:repeat(2,1fr);} }
+  .slot.v textarea{border-bottom-color:var(--verb);} .slot.v label{color:var(--verb);}
+  .slot.g textarea{border-bottom-color:var(--goal);} .slot.g label{color:var(--goal);}
+  .slot.m textarea{border-bottom-color:var(--method);} .slot.m label{color:var(--method);}
+  .slot.c textarea{border-bottom-color:var(--context);} .slot.c label{color:var(--context);}
+  .livesentence{margin-top:14px; padding:12px 14px; background:var(--gray-08); border-radius:6px; font-family:"Source Serif 4",serif; font-size:15px; line-height:1.8; color:var(--gray-40); border:1px dashed var(--gray-20);}
+  .livesentence .filled{font-style:normal; font-weight:600;}
+  .livesentence .slotv{color:var(--verb-ink); background:var(--verb-bg); padding:0 3px; border-radius:2px;}
+  .livesentence .slotg{color:var(--goal-ink); background:var(--goal-bg); padding:0 3px; border-radius:2px;}
+  .livesentence .slotm{color:var(--method-ink); background:var(--method-bg); padding:0 3px; border-radius:2px;}
+  .livesentence .slotc{color:var(--context-ink); background:var(--context-bg); padding:0 3px; border-radius:2px;}
+  .stagerow{display:grid; grid-template-columns:1fr; gap:14px; margin-top:14px;}
+  @media(min-width:520px){ .stagerow{grid-template-columns:1fr 1fr;} }
+
+  .seamwrap{padding-top:6vh; text-align:center;}
+  .seamwrap .tstamp{display:inline-block; font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:#fff; background:var(--black); padding:5px 12px; border-radius:3px; margin-bottom:18px;}
+  .seamwrap .q{font-family:"Source Serif 4",serif; font-size:26px; line-height:1.4; margin:0 0 18px;}
+  .seamwrap .q em{font-style:normal; font-weight:600; color:var(--gold-deep); background:#f4ecd8; padding:0 5px; border-radius:3px;}
+  .seam-reveal-btn{font-family:"Inter",sans-serif; font-size:13px; font-weight:500; background:var(--paper); border:1px solid var(--gray-20); color:var(--ink); padding:10px 18px; border-radius:6px; cursor:pointer;}
+  .seam-reveal-btn:hover{border-color:var(--gray-70);}
+  .seamanswer{display:none; margin-top:18px; padding:14px 18px; background:var(--paper); border-left:3px solid var(--break); border-radius:0 6px 6px 0; text-align:left; font-size:15px; color:#6b3737; line-height:1.55; max-width:520px; margin-left:auto; margin-right:auto;}
+  .seamanswer.show{display:block; animation:fadein .3s ease;}
+  .backtochain{margin-top:16px; display:none;}
+  .review-mode .backtochain{display:block;}
+  .backtochain button{font-family:"Inter",sans-serif; font-size:13px; color:var(--gray-70); background:none; border:none; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0;}
+  .backtochain button:hover{color:var(--gold-deep);}
+  .downloadrow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px;}
+  .downloadrow button{padding:9px 16px; margin-top:0;}
+
+  .synth-sub{font-size:13px; color:var(--gray-70); margin:0 0 16px;}
+  .donebanner{background:var(--gold); border-radius:7px; padding:14px 17px; margin-bottom:16px;}
+  .donebanner-title{font-family:"Source Serif 4",serif; font-weight:600; font-size:18px; color:var(--ink); margin:0 0 4px;}
+  .donebanner-sub{font-size:13px; color:#4a3f28; margin:0; line-height:1.45;}
+  .schain{background:var(--paper); border:1px solid var(--gray-20); border-radius:8px; padding:4px 18px;}
+  .sbox{display:grid; grid-template-columns:100px 1fr; gap:14px; align-items:start; padding:15px 0; border-bottom:1px solid var(--gray-08);}
+  .sbox:last-child{border-bottom:none;}
+  .sbox .stag{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.04em; text-transform:uppercase; padding:3px 8px; border-radius:3px; height:fit-content; white-space:nowrap; font-weight:700;}
+  .s1t{background:var(--context-bg); color:var(--context-ink);} .s2t{background:var(--goal-bg); color:var(--goal-ink);}
+  .s3t{background:var(--method-bg); color:var(--method-ink);} .s4t{background:var(--verb-bg); color:var(--verb-ink);}
+  .sbox .stxt{font-family:"Source Serif 4",serif; font-size:15px; line-height:1.55;}
+  .sbox .stxt.placeholder{color:var(--gray-40); font-style:italic;}
+  .clearbtn{font-family:"Inter",sans-serif; font-size:13px; letter-spacing:.02em; color:var(--gray-70); background:none; border:1px solid var(--gray-20); padding:8px 13px; border-radius:5px; cursor:pointer; margin-top:16px;}
+  .clearbtn:hover{border-color:var(--break); color:var(--break);}
+  .savestate{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; color:var(--gray-40); letter-spacing:.04em; text-transform:uppercase;}
+
+  .modal-overlay{position:fixed; inset:0; background:rgba(20,20,18,.55); display:none; align-items:flex-start; justify-content:center; padding:5vh 20px; z-index:50; overflow-y:auto;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--paper); max-width:820px; width:100%; border-radius:10px; padding:26px 28px 30px; box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .modal-head{display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid var(--black); padding-bottom:10px; margin-bottom:16px;}
+  .modal-head h2{font-size:26px;}
+  .modal-close{font-family:"Inter",sans-serif; font-size:13px; background:none; border:1px solid var(--gray-20); padding:6px 12px; border-radius:5px; cursor:pointer; color:var(--gray-70);}
+  .modal-close:hover{border-color:var(--ink); color:var(--ink);}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--gray-70); text-align:left; font-weight:700; padding:8px 10px; border-bottom:1.5px solid var(--black); background:var(--gray-08);}
+  tbody td{padding:9px 10px; border-bottom:1px solid var(--gray-08); vertical-align:top; line-height:1.45;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr td:nth-child(2){color:var(--break); font-size:13px;}
+  .sym{font-style:italic; color:var(--gray-70);}
+  .benchfilter{display:flex; gap:6px; flex-wrap:wrap; margin:2px 0 14px;}
+  .bf{font-family:"Inter",sans-serif; font-size:13px; font-weight:500; padding:6px 13px; border-radius:20px; border:1px solid var(--gray-20); background:var(--paper); color:var(--gray-70); cursor:pointer; transition:.15s;}
+  .bf:hover{border-color:var(--gray-70); color:var(--ink);}
+  .bf.active{background:var(--black); color:var(--gold); border-color:var(--black);}
+  .triage{margin-top:20px; border:1px solid var(--gray-20); border-radius:6px; overflow:hidden;}
+  .triage .th{background:var(--gray-08); padding:10px 14px; border-bottom:1px solid var(--gray-20);}
+  .triage .th b{font-size:15px;}
+  .triage .th span{color:var(--gray-70); font-size:13px; display:block; margin-top:2px;}
+  .triage .grid{display:grid; grid-template-columns:1fr;}
+  @media(min-width:600px){ .triage .grid{grid-template-columns:1fr 1fr;} }
+  @media(min-width:860px){ .triage .grid{grid-template-columns:1fr 1fr 1fr;} }
+  .triage .cell{padding:11px 14px; border-right:1px solid var(--gray-08); border-bottom:1px solid var(--gray-08);}
+  .triage .cell .if{font-size:13px; color:var(--gray-70); line-height:1.4;}
+  .triage .cell .use{font-family:"Barlow Semi Condensed",sans-serif; font-size:13px; font-weight:700; color:var(--verb-ink); background:var(--verb-bg); display:inline-block; padding:2px 7px; border-radius:3px; margin-top:5px;}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="rail">
+    <div class="rail-brand">
+      <div class="pfw"><b>Purdue</b> Fort Wayne</div>
+      <div class="celt">CELT · Center for the Enhancement of Learning &amp; Teaching</div>
+    </div>
+    <nav id="railnav"></nav>
+    <div class="rail-foot">
+      <p class="railfoot-title">References</p>
+      <button onclick="openBench()">Repair bench</button>
+      <button onclick="openBloom()" style="margin-top:8px;">Bloom's taxonomy</button>
+      <button onclick="openEvidence()" style="margin-top:8px;">Full reference list</button>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="stage-top">
+      <span class="crumb" id="crumb">Step <b>1</b> of <b>15</b></span>
+      <button class="bench-btn" onclick="openBench()">Repair bench →</button>
+    </div>
+
+    <div class="viewport" id="viewport">
+
+      <div class="slide active" data-slide="hero">
+        <div class="hero">
+          <p class="kicker">Course design · interactive job aid</p>
+          <h1>The alignment map <em>— four links, one chain</em></h1>
+          <p class="thesis">A student <span style="color:var(--verb);font-weight:600">practises</span> in the activities what they will <span style="color:var(--method);font-weight:600">prove</span> in the assessment, which is exactly what you <span style="color:var(--goal);font-weight:600">promised</span> in the objective, which serves what they'll <em>know, understand, or be able to do</em> — the outcome.</p>
+          <div class="cta"><button class="navbtn primary" onclick="goTo('overview')">See the whole chain →</button></div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="overview">
+        <div class="ovhead"><p class="lbl minilbl">Four links, one chain</p><h2 style="font-size:26px;">One example, carried end to end</h2></div>
+        <div class="ovgrid">
+          <div class="ovcard"><span class="ovn">01</span><div><h2>Learning outcome</h2><p>The promise. What they'll know, understand, or be able to do. Broad, durable, never measured directly.</p></div></div>
+          <div class="ovarrow">↓</div>
+          <div class="ovcard"><span class="ovn">02</span><div><h2>Learning objective</h2><p>The contract. One observable move, unit or week scale. The only band you can measure directly.</p></div></div>
+          <div class="ovarrow">↓</div>
+          <div class="ovcard"><span class="ovn">03</span><div><h2>Assessment</h2><p>The proof. Where the student performs the verb and you collect the evidence.</p></div></div>
+          <div class="ovarrow">↓</div>
+          <div class="ovcard"><span class="ovn">04</span><div><h2>Learning activity</h2><p>The rehearsal. Where the verb is modeled, attempted, and corrected while mistakes are cheap.</p></div></div>
+        </div>
+        <div class="cta" style="margin-top:22px;"><button class="navbtn primary" onclick="goTo('out-intro')">Start the tour →</button></div>
+      </div>
+
+      <div class="slide" data-slide="out-intro">
+        <div class="stagehead s1"><span class="n">01</span><h2>Learning outcome</h2></div>
+        <p class="stagesub">The promise — what they'll know, understand, or be able to do. Broad, durable, never measured directly.</p>
+        <p class="lede">One sentence, <em>per outcome</em> — not per course. Most courses carry four to eight course-level outcomes across the whole term; this tour walks one chain under a single outcome at a time. It survives the final exam — it's what's left six months later. You never measure an outcome directly; you measure the objectives that add up to it.</p>
+        <div class="steps">
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show Bloom's three domains of outcome</button>
+            <div class="step-content">
+              <p style="margin:0 0 8px; font-size:13px; color:var(--gray-70);">Bloom's original three domains (1956) — most outcomes live mainly in one.</p>
+              <ul>
+                <li><span class="tag">cognitive</span> — can judge which approach fits an unfamiliar situation</li>
+                <li><span class="tag">psychomotor</span> — can produce the thing to a standard the field would accept</li>
+                <li><span class="tag">affective</span> — values it enough to choose it voluntarily, and is willing to change position when the evidence changes</li>
+              </ul>
+            </div>
+          </div>
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show the worked example</button>
+            <div class="step-content">
+              <p style="font-family:'Source Serif 4',serif; font-size:15px; line-height:1.5; margin:0 0 6px;">"Learners make <b>defensible decisions</b> with incomplete information, and can <b>explain their reasoning</b> to someone who disagrees."</p>
+              <p style="font-size:13px; color:var(--gray-70); line-height:1.45; margin:0;">No verb here is measurable on its own — that's correct. An outcome is a destination, not a test item. Band 02 is where it becomes measurable.</p>
+              <div class="checkq">
+                <p class="cq-label">Quick check</p>
+                <p>Point to the phrase in this sentence that's ready to measure right now, with no further work.</p>
+                <button class="reveal-btn" onclick="revealStep(this)" style="margin-top:9px;"><span class="ic">›</span> Show the answer</button>
+                <div class="step-content"><p style="margin:0;">Trick question — none of it is measurable yet. That's exactly what makes this an outcome instead of an objective: it names a destination, not something you can check off yet. Band 02 is where pieces of it turn into something you can actually measure.</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="out-yours">
+        <div class="yourshead"><p class="minilbl">01 · Learning outcome — now write yours</p></div>
+        <div class="prompt-box">
+          <p class="stamp">Your turn</p>
+          <p class="q"><b>Six months after the course ends, what can this student do that they could not do on day one?</b> Write it as one sentence with a person in it. Just one of your outcomes for now — pick the one you most want to build out.</p>
+          <div class="fld"><label>Your outcome</label><textarea id="f-outcome" placeholder="e.g. make defensible decisions with incomplete information…" rows="1" oninput="autoGrow(this)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="out-seam">
+        <div class="seamwrap">
+          <span class="tstamp">Seam test 1</span>
+          <p class="q">Could <em data-bind-wrap="outcome">this outcome</em> stand as one of just a handful of broad headings for your whole course — or does it already read like a single, narrow task?</p>
+          <button class="seam-reveal-btn" onclick="revealSeam(this)">If narrow…</button>
+          <div class="seamanswer">Then it's really too specific to be a learning outcome yet. A learning outcome should be one of a small number of broad headings for the whole course (Harden, 2002) — most courses work well with four to eight — broad enough to hold weeks of detailed work underneath it, even before that detail is written.</div>
+          <p class="backtochain"><button onclick="goTo('final-check')">← Back to final check</button></p>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="obj-intro">
+        <div class="stagehead s2"><span class="n">02</span><h2>Learning objective</h2></div>
+        <p class="stagesub">The contract — one observable move, unit or week scale. The only band you can measure directly.</p>
+        <p class="lede">An objective is a sentence you can <b>assemble from parts.</b> The parts below are colored consistently through the rest of this tour.</p>
+        <div class="steps">
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show the worked example</button>
+            <div class="step-content">
+              <div class="assembly"><p class="sentence">By the end of this unit, students will
+                <span class="chip c-verb">recommend</span>
+                <span class="chip c-goal">one of two job candidates for an open position</span>
+                <span class="chip c-method">by comparing their resumes against the job posting's requirements</span>,
+                <span class="chip c-context">citing at least two specific requirements to justify the choice.</span>
+              </p></div>
+              <div class="checkq">
+                <p class="cq-label">Quick check</p>
+                <p>Which word names the action the student performs — the one a stranger could watch them do and check off as done?</p>
+                <button class="reveal-btn" onclick="revealStep(this)" style="margin-top:9px;"><span class="ic">›</span> Show the answer</button>
+                <div class="step-content"><p style="margin:0;">"Recommend." That's the verb — the action a stranger could watch happen. "One of two job candidates" is the <b>goal</b> (what the verb acts on). "By comparing their resumes against the job posting's requirements" is the separate <b>method</b> (how it gets done). Two different jobs, easy to blur together — that's exactly why they get their own colors.</p></div>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show how it's built</button>
+            <div class="step-content"><div class="key">
+              <div class="k v"><span class="q">Action — do what?</span><p>An observable verb. Someone could film it. <em>Identify, compare, calculate, design, defend.</em></p></div>
+              <div class="k g"><span class="q">Goal — on what?</span><p>The object the verb acts on. Concrete enough to hand over. Not "concepts."</p></div>
+              <div class="k m"><span class="q">Method — by doing what?</span><p>The means, tool, or framework they must use. This is what makes it your course.</p></div>
+              <div class="k c"><span class="q">Criterion — how well?</span><p>The standard or condition. Write it once here and it becomes your rubric.</p></div>
+            </div>
+            <p style="margin:12px 0 0;"><button class="reveal-btn" onclick="openBloom()"><span class="ic" style="transform:none;">↗</span> Reference: how does "recommend" compare to other verbs? Bloom's taxonomy</button></p>
+            </div>
+          </div>
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> See a broken version</button>
+            <div class="step-content"><div class="broken">
+              <p class="h">Broken — and why</p>
+              <p class="s">"Students will understand how to make good decisions."</p>
+              <p>Verb is invisible (nobody can watch "understand") · no object you could collect · no method, so any course could claim it · no criterion, so you'll grade on vibes.</p>
+            </div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="obj-yours">
+        <div class="yourshead"><p class="minilbl">02 · Learning objective — now write yours</p></div>
+        <div class="prompt-box">
+          <p class="stamp">Your turn</p>
+          <p class="q"><b>Name your verb. Then name what you'd accept as proof it happened, and how much is enough.</b></p>
+          <div class="slots">
+            <div class="fld slot v"><label>Action</label><textarea id="f-verb" placeholder="recommend" rows="1" oninput="autoGrow(this)"></textarea></div>
+            <div class="fld slot g"><label>Goal</label><textarea id="f-goal" placeholder="one of two job candidates" rows="1" oninput="autoGrow(this)"></textarea></div>
+            <div class="fld slot m"><label>Method</label><textarea id="f-method" placeholder="comparing resumes against the posting" rows="1" oninput="autoGrow(this)"></textarea></div>
+            <div class="fld slot c"><label>Criterion</label><textarea id="f-context" placeholder="citing two requirements from the posting" rows="1" oninput="autoGrow(this)"></textarea></div>
+          </div>
+          <div class="livesentence" id="livesentence">Students will…</div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="obj-seam">
+        <div class="seamwrap">
+          <span class="tstamp">Seam test 2</span>
+          <p class="q">Is <em data-bind-wrap="verb2">the verb in your objective</em> actually part of your outcome — or just adjacent to it?</p>
+          <button class="seam-reveal-btn" onclick="revealSeam(this)">If not…</button>
+          <div class="seamanswer">You've written a fine learning objective for a different course. Trace it back to the learning outcome it's meant to serve, or admit it belongs to one you haven't written yet.</div>
+          <p class="backtochain"><button onclick="goTo('final-check')">← Back to final check</button></p>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="assess-intro">
+        <div class="stagehead s3"><span class="n">03</span><h2>Assessment</h2></div>
+        <p class="stagesub">The proof — the occasion where the student performs the verb and you collect evidence.</p>
+        <p class="lede">An assessment is not "a test." It's <b>whatever makes the objective's verb visible.</b> The verb picks the format — never the other way round. Not every assessment is graded, either: a quick formative check tells you and the student whether they're on track <em>before</em> the graded moment arrives.</p>
+        <div class="steps">
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show the aligned example</button>
+            <div class="step-content">
+              <p style="margin:0 0 8px;">The objective's verb is the action a student has to perform. The assessment is just whichever <b>format</b> lets you see them perform it — the verb stays fixed, the format doesn't have to.</p>
+              <ul>
+                <li><b>Written memo.</b> Recommend one of two candidates for the role in a short memo, citing at least two requirements from the job posting.</li>
+                <li><b>Recorded video.</b> Record a two-minute video defending the pick to a skeptical hiring manager, citing specific requirements from the posting.</li>
+                <li><b>Peer debate.</b> In pairs, argue for opposite candidates, then jointly write a one-paragraph recommendation citing the posting's requirements.</li>
+              </ul>
+              <p style="margin:10px 0 0; color:var(--gray-70); font-size:13px;">All three are equally aligned — same verb, same standard. Pick whichever format fits your class time and tools.</p>
+              <div class="checkq">
+                <p class="cq-label">Quick check</p>
+                <p>Could a student pass this task by only describing both candidates, without ever picking one?</p>
+                <button class="reveal-btn" onclick="revealStep(this)" style="margin-top:9px;"><span class="ic">›</span> Show the answer</button>
+                <div class="step-content"><p style="margin:0;">No — and that's the whole test. If a description-only answer could pass, the task has quietly dropped the objective's verb. Whatever format you choose, it has to force a choice and a justification, not just a summary of both candidates.</p></div>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show formative vs. summative</button>
+            <div class="step-content">
+              <p style="margin:0 0 10px;">Not every assessment looks like the graded memo above. Assessments split into two families, and most units need both.</p>
+              <div class="cols">
+                <div>
+                  <p class="minilbl">Formative — while it's still fixable</p>
+                  <ul>
+                    <li>Happens <b>during</b> learning, not after it</li>
+                    <li>Usually ungraded or very low-stakes</li>
+                    <li>Purpose: catch a misconception while it's cheap to fix</li>
+                    <li>Examples: a one-minute reflection write, a quick poll, a low-stakes group discussion</li>
+                  </ul>
+                </div>
+                <div>
+                  <p class="minilbl">Summative — the final tally</p>
+                  <ul>
+                    <li>Happens <b>after</b> learning, to sum it up</li>
+                    <li>Almost always graded, often heavily weighted</li>
+                    <li>Purpose: certify how well the objective was met</li>
+                    <li>Examples: the graded memo, a final exam, a final project</li>
+                  </ul>
+                </div>
+              </div>
+              <p style="margin:10px 0 0; color:var(--gray-70); font-size:13px;">The "check readiness" step in band 04 is a formative check by another name — same question, "are we on track?," asked before the summative moment instead of after it.</p>
+            </div>
+          </div>
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show how the verb picks the format</button>
+            <div class="step-content"><ul>
+              <li><b>Identify / define</b> → quiz, labeling</li>
+              <li><b>Explain</b> → short write-up</li>
+              <li><b>Apply / calculate</b> → problem set, lab</li>
+              <li><b>Analyze / compare</b> → annotated comparison</li>
+              <li><b>Evaluate / recommend</b> → memo, debate, review</li>
+              <li><b>Design / produce</b> → artifact, portfolio</li>
+            </ul></div>
+          </div>
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> See a misaligned version</button>
+            <div class="step-content"><div class="broken">
+              <p class="h">Misaligned — invisible until grading</p>
+              <p class="s">Multiple-choice quiz on the job posting's listed requirements.</p>
+              <p>Measures recall while the objective promised a recommendation. A student who can list every requirement from memory may still be unable to choose between two candidates — and you'd never find out.</p>
+            </div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="assess-yours">
+        <div class="yourshead"><p class="minilbl">03 · Assessment — now write yours</p></div>
+        <div class="prompt-box">
+          <p class="stamp">Your turn</p>
+          <p class="q"><b>Imagine a student who aces this assessment but hasn't achieved your outcome. What did they do?</b> If you can picture that student easily, the assessment measures the wrong thing.</p>
+          <div class="fld"><label>Your assessment</label><textarea id="f-assess" placeholder="the task where they perform this, graded" rows="1" oninput="autoGrow(this)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="assess-seam">
+        <div class="seamwrap">
+          <span class="tstamp">Seam test 3</span>
+          <p class="q">Can you actually measure <em data-bind-wrap="verb3">the action in your objective</em> with this assessment?</p>
+          <button class="seam-reveal-btn" onclick="revealSeam(this)">If not…</button>
+          <div class="seamanswer">Then the assessment is measuring something else — recall instead of the verb you wrote, effort instead of the actual judgment. Change the format, not the verb.</div>
+          <p class="backtochain"><button onclick="goTo('final-check')">← Back to final check</button></p>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="act-intro">
+        <div class="stagehead s4"><span class="n">04</span><h2>Learning activity</h2></div>
+        <p class="stagesub">The rehearsal space — but rehearsal is only one of three jobs this band has to do.</p>
+        <p class="lede">Activities do three different jobs: <b>build</b> the knowledge the verb needs, <b>rehearse</b> the verb itself, and let students <b>check</b> their own readiness. Skip one and the assessment finds the gap for you.</p>
+
+        <div class="actflow">
+          <div class="fbox f1"><b>Build</b><span>Give them what they need before you ask them to use it.</span></div>
+          <div class="arrow">→</div>
+          <div class="fbox f2"><b>Rehearse</b><span>Model it, try it with help, then try it alone — for free.</span></div>
+          <div class="arrow">→</div>
+          <div class="fbox f3"><b>Check</b><span>A short self-test before the graded attempt, not just after.</span></div>
+        </div>
+        <p style="margin:0 0 16px; font-size:13px; color:var(--gray-70); line-height:1.45;">These three jobs mirror Fink's three components of active learning — Information &amp; Ideas, Experience, and Reflective Dialogue (Fink, 2003). The richest activities do more than one at once: a good case discussion can deliver information <em>and</em> give experience in the same sitting.</p>
+
+        <div class="steps">
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show how to build the knowledge first</button>
+            <div class="step-content">
+              <p style="margin:0 0 4px;">Before students can recommend a candidate by comparing resumes against a job posting, they need to know how to read a job posting for what actually matters — a short reading, a mini-lecture, a worked example. Plain content delivery, done in service of the objective's <em>method</em>.</p>
+              <p style="margin:0; color:var(--gray-70); font-size:13px;">Fink (2003) calls this "Information and Ideas." Serves the method — you can't rehearse a move nobody taught them.</p>
+            </div>
+          </div>
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show how to rehearse the verb</button>
+            <div class="step-content">
+              <div class="cols three">
+                <div><p class="minilbl">1 · See it done</p><p style="margin:0 0 4px;">Instructor compares two sample resumes against a posting out loud, thinking through which requirements matter most.</p><p style="margin:0; color:var(--gray-70); font-size:13px;">Students can't copy a move they've never seen.</p></div>
+                <div><p class="minilbl">2 · Try it with help</p><p style="margin:0 0 4px;">Pairs compare a short resume pair against a posting with a checklist, then swap and challenge each other's pick.</p><p style="margin:0; color:var(--gray-70); font-size:13px;">A scaffold that comes off later.</p></div>
+                <div><p class="minilbl">3 · Be wrong for free</p><p style="margin:0 0 4px;">A short draft recommendation memo in the exact assessment format. Feedback only. No grade.</p><p style="margin:0; color:var(--gray-70); font-size:13px;">Removes most "the exam wasn't like the class" complaints.</p></div>
+              </div>
+              <p style="margin:10px 0 0; font-size:13px; color:var(--gray-70);">Fink (2003) calls this "Experience" — direct, hands-on practice beats reading about the skill, whenever it's practical to arrange.</p>
+              <div class="caution">
+                <p class="h">Watch for teaching to the test</p>
+                <p>If every rehearsal is an identical clone of the graded pair, students get good at <em>that pair</em>, not the underlying skill. Vary at least one rehearsal — a different resume pair, the same requirements — to protect transfer. And spread the three stages across the unit instead of cramming them the week before; spaced practice beats one late rehearsal.</p>
+              </div>
+              <div class="checkq"><p class="cq-label">Quick check</p><p>Which of these three stages is missing from your course right now, if any? (This one's about your course, not a fixed answer — worth sitting with.)</p></div>
+            </div>
+          </div>
+          <div class="step">
+            <button class="reveal-btn" onclick="revealStep(this)"><span class="ic">›</span> Show how to check readiness</button>
+            <div class="step-content">
+              <p style="margin:0 0 4px;">Before the graded attempt, give students a short self-check — a checklist of the posting's requirements, one question ("which requirement is your recommendation weakest on?"), or two minutes of paired discussion comparing picks before submitting.</p>
+              <p style="margin:0; color:var(--gray-70); font-size:13px;">Fink (2003) calls this "Reflective Dialogue" — reflection works alone (a journal entry) or with others (a quick partner check), and either counts. Serves their own judgment — they submit knowing where they stand, not hoping.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="act-yours">
+        <div class="yourshead"><p class="minilbl">04 · Learning activity — now write yours</p></div>
+        <div class="prompt-box">
+          <p class="stamp">Your turn</p>
+          <p class="q"><b>Name one activity for each job.</b> If you can't fill in "check," that's usually the first gap worth closing.</p>
+          <div class="stagerow">
+            <div class="fld"><label>Build</label><textarea id="f-act1" placeholder="the reading or mini-lecture that gives them the criteria" rows="1" oninput="autoGrow(this)"></textarea></div>
+            <div class="fld"><label>Rehearse</label><textarea id="f-act2" placeholder="modeled, then guided, then a low-stakes solo attempt" rows="1" oninput="autoGrow(this)"></textarea></div>
+          </div>
+          <div class="fld" style="margin-top:14px;"><label>Check</label><textarea id="f-act3" placeholder="a self-check checklist before they submit" rows="1" oninput="autoGrow(this)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="act-seam">
+        <div class="seamwrap">
+          <span class="tstamp">Seam test 4</span>
+          <p class="q">Has the student rehearsed <em data-bind-wrap="assess4">this exact move</em> — ungraded — before the assessment that actually counts?</p>
+          <button class="seam-reveal-btn" onclick="revealSeam(this)">If not…</button>
+          <div class="seamanswer">If the assessment is their first attempt, you're testing courage, not learning.</div>
+          <p class="backtochain"><button onclick="goTo('final-check')">← Back to final check</button></p>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="final-check">
+        <div class="closingq" style="margin-top:6vh;">
+          <p class="cq-label">Before you finish</p>
+          <p class="q">Which of the four seam tests are you least sure your chain would actually pass? Go back and test it now, while it's still easy to fix.</p>
+          <div class="seamjump">
+            <button onclick="goTo('out-seam', true)">Seam 1 · Is the outcome broad enough?</button>
+            <button onclick="goTo('obj-seam', true)">Seam 2 · Objective ↔ Outcome</button>
+            <button onclick="goTo('assess-seam', true)">Seam 3 · Assessment ↔ Objective</button>
+            <button onclick="goTo('act-seam', true)">Seam 4 · Activity ↔ Assessment</button>
+          </div>
+          <p style="margin:14px 0 0; font-size:13px; color:var(--gray-70);">Satisfied with all four? Continue to see your finished chain.</p>
+        </div>
+      </div>
+
+      <div class="slide" data-slide="synthesis">
+        <div class="donebanner">
+          <p class="donebanner-title">Congratulations — you've completed the tour</p>
+          <p class="donebanner-sub">You've walked the full chain from outcome to activity. What follows is yours to keep — download it and bring it into your syllabus or course plan.</p>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;"><h2 style="font-size:26px;">Your complete chain</h2><span class="savestate" id="savestate">saved locally</span></div>
+        <p class="synth-sub">Built automatically from what you wrote in the tour. Blank rows show what to go back and fill in.</p>
+        <div class="schain">
+          <div class="sbox"><span class="stag s1t">01 outcome</span><div class="stxt" id="s-outcome"></div></div>
+          <div class="sbox"><span class="stag s2t">02 objective</span><div class="stxt" id="s-objective"></div></div>
+          <div class="sbox"><span class="stag s3t">03 assessment</span><div class="stxt" id="s-assess"></div></div>
+          <div class="sbox"><span class="stag s4t">04 activity</span><div class="stxt" id="s-activity"></div></div>
+        </div>
+        <div class="downloadrow">
+          <button class="navbtn primary" onclick="downloadChain()">Download your chain</button>
+          <button class="navbtn" onclick="printChain()">Print / Save as PDF</button>
+          <button class="clearbtn" onclick="clearWorksheet()">Clear everything you've written</button>
+        </div>
+
+        <p style="font-family:'Source Serif 4',serif; font-style:italic; font-size:15px; color:var(--gray-70); margin-top:22px; line-height:1.5;">Alignment isn't paperwork. It's the difference between a student who says "that was hard but fair" and one who says "I don't know what she wanted."</p>
+      </div>
+
+    </div>
+
+    <div class="stage-foot">
+      <button class="navbtn" id="backbtn" onclick="prevSlide()">← Back</button>
+      <div class="progressbar"><i id="progressfill"></i></div>
+      <div class="navbtns"><button class="navbtn primary" id="nextbtn" onclick="nextSlide()">Continue →</button></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="benchModal">
+  <div class="modal">
+    <div class="modal-head"><h2>The repair bench</h2><button class="modal-close" onclick="closeBench()">Close ✕</button></div>
+    <p class="minilbl">Diagnose — find your symptom, read across</p>
+    <div class="benchfilter" id="benchfilter">
+      <button class="bf" data-f="all">All</button>
+      <button class="bf" data-f="outcome">Outcome</button>
+      <button class="bf" data-f="objective">Objective</button>
+      <button class="bf" data-f="assessment">Assessment</button>
+      <button class="bf" data-f="activity">Activity</button>
+    </div>
+    <table id="benchTable">
+      <thead><tr><th>Ask yourself</th><th>What's broken</th><th>The repair</th></tr></thead>
+      <tbody>
+        <tr data-band="outcome"><td><span class="sym">Are you trying to fit your whole syllabus into one outcome sentence?</span></td><td>Outcome inflation — one sentence promising an entire course.</td><td>Split into four to eight separate course outcomes. This tour walks one chain under just one of them.</td></tr>
+        <tr data-band="outcome"><td><span class="sym">Do your units' objectives point to different, unrelated themes with nothing tying them together?</span></td><td>Orphaned outcomes — nothing ties the term together.</td><td>Pick your four to eight course outcomes up front, then map every objective back to one of them.</td></tr>
+        <tr data-band="objective"><td><span class="sym">Do your objectives use words like "understand," "know," "appreciate," or "be aware of"?</span></td><td>Invisible verb — an outcome wearing an objective's clothes.</td><td>Ask "what would I accept as proof?" Your answer is the verb. Promote the old sentence to band 01.</td></tr>
+        <tr data-band="objective"><td><span class="sym">Does your objective just name a topic, like "Unit 4: supply chains"?</span></td><td>Content masquerading as learning. No person is doing anything.</td><td>Force the frame: "Students will ___." You can't finish that sentence with a topic.</td></tr>
+        <tr data-band="objective assessment"><td><span class="sym">Does your objective say design/evaluate/create while the assessment is a quiz?</span></td><td>Verb mismatch — the assessment silently lowers the course.</td><td>Raise the assessment or lower the objective — on purpose, and tell students which.</td></tr>
+        <tr data-band="objective"><td><span class="sym">Do all your objectives begin with identify, list, or define?</span></td><td>Level ceiling. The course never leaves recall.</td><td>Escalate at least one objective per unit into apply/analyze/evaluate/create.</td></tr>
+        <tr data-band="objective"><td><span class="sym">Do you have more than 3–5 objectives in a single unit?</span></td><td>Objective inflation — each one owes an assessment and an activity.</td><td>Merge or cut until each survivor can afford its rehearsal.</td></tr>
+        <tr data-band="assessment"><td><span class="sym">Would two instructors grade the same paper differently?</span></td><td>No shared criterion — the standard lives only in the grader's head.</td><td>Write the criterion into the objective, then copy it verbatim into a rubric.</td></tr>
+        <tr data-band="objective assessment"><td><span class="sym">Does grading take forever, with every grade feeling arguable?</span></td><td>No criterion was ever declared.</td><td>Move the criterion into the objective — then turn it into rubric rows.</td></tr>
+        <tr data-band="assessment activity"><td><span class="sym">Do students say "the exam wasn't like the class"?</span></td><td>No rehearsal. Activities and assessment are different genres.</td><td>Add one ungraded rehearsal in the exact format of the assessment.</td></tr>
+        <tr data-band="activity"><td><span class="sym">Do students see the graded task for the first time only when it counts?</span></td><td>No rehearsal at all — the assessment tests courage, not learning.</td><td>Add at least one ungraded, low-stakes attempt in the same format before it counts.</td></tr>
+        <tr data-band="activity"><td><span class="sym">Do you have a favorite activity that doesn't map to any objective?</span></td><td>Orphan activity — costs time, buys nothing measurable.</td><td>Name the objective it serves, write the one it deserves, or cut it.</td></tr>
+      </tbody>
+    </table>
+    <div class="triage">
+      <div class="th"><b>Verb triage</b><span>You wrote "understand." What would you accept as proof? Answer that, and take the verb.</span></div>
+      <div class="grid">
+        <div class="cell"><span class="if">They can recognise or name it correctly →</span><br><span class="use">identify · define · label</span></div>
+        <div class="cell"><span class="if">They can put it in their own words →</span><br><span class="use">explain · summarise · paraphrase</span></div>
+        <div class="cell" style="border-right:0"><span class="if">They can use it on a new problem →</span><br><span class="use">apply · solve · calculate</span></div>
+        <div class="cell" style="border-bottom:0"><span class="if">They can take it apart and see how it works →</span><br><span class="use">analyse · compare · differentiate</span></div>
+        <div class="cell" style="border-bottom:0"><span class="if">They can judge it and stand behind the judgment →</span><br><span class="use">evaluate · critique · justify</span></div>
+        <div class="cell" style="border-right:0; border-bottom:0"><span class="if">They can make something that didn't exist →</span><br><span class="use">design · produce · compose</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BLOOM'S TAXONOMY MODAL ===== -->
+<div class="modal-overlay" id="bloomModal">
+  <div class="modal">
+    <div class="modal-head"><h2>Bloom's taxonomy</h2><button class="modal-close" onclick="closeBloom()">Close ✕</button></div>
+    <p style="margin:0 0 14px;">Anderson &amp; Krathwohl's revised Bloom's taxonomy (2001) orders cognitive verbs from low-lift recall to high-lift creation. Objectives near the bottom are easiest to write — and easiest to over-rely on. Objectives near the top ask more of the student, and more of the assessment that has to catch them.</p>
+    <div class="bloomladder">
+      <div class="bl" style="background:#eef5ec;color:#2c4a2e;">Remember</div>
+      <div class="bl" style="background:#d9ecda;color:#24422a;">Understand</div>
+      <div class="bl" style="background:#b7d9b9;color:#1d4a21;">Apply</div>
+      <div class="bl" style="background:#8fc492;color:#17371a;">Analyze</div>
+      <div class="bl" style="background:#5aa15e;color:#fff;">Evaluate</div>
+      <div class="bl" style="background:var(--verb);color:#fff;">Create</div>
+    </div>
+    <table style="margin-top:16px;">
+      <thead><tr><th>Level</th><th>Typical verbs</th></tr></thead>
+      <tbody>
+        <tr><td><b>Remember</b></td><td>define, list, name, recall</td></tr>
+        <tr><td><b>Understand</b></td><td>explain, summarize, classify</td></tr>
+        <tr><td><b>Apply</b></td><td>solve, calculate, demonstrate</td></tr>
+        <tr><td><b>Analyze</b></td><td>compare, differentiate, organize</td></tr>
+        <tr><td><b>Evaluate</b></td><td>judge, critique, recommend</td></tr>
+        <tr><td><b>Create</b></td><td>design, compose, construct</td></tr>
+      </tbody>
+    </table>
+    <p style="margin:14px 0 0; font-size:13px; color:var(--gray-70);">The repair bench's verb triage in band 02 follows this same ladder — "recommend," from the worked example, sits at the Evaluate level.</p>
+  </div>
+</div>
+
+<!-- ===== EVIDENCE BASE MODAL ===== -->
+<div class="modal-overlay" id="evidenceModal">
+  <div class="modal">
+    <div class="modal-head"><h2>Evidence base</h2><button class="modal-close" onclick="closeEvidence()">Close ✕</button></div>
+    <p class="minilbl">What each band is grounded in</p>
+    <table>
+      <thead><tr><th>Band</th><th>Framework / finding</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>01 Outcome</td><td>Standard definition: what a learner will know, understand, or be able to do.</td><td>Kennedy, 2006</td></tr>
+        <tr><td>01 Outcome ↔ 02 Objective</td><td>Outcomes are broad and few (8–12 per course); objectives are the detailed, narrow steps under them.</td><td>Harden, 2002</td></tr>
+        <tr><td>01 Outcome → 02 Objective</td><td>Backward design; start from the destination, not the content.</td><td>Wiggins &amp; McTighe, 2005</td></tr>
+        <tr><td>02 Objective</td><td>Observable-verb objective structure (action, condition, criterion).</td><td>Mager, 1997</td></tr>
+        <tr><td>02 Objective</td><td>Verb-level taxonomy (remember → create).</td><td>Anderson &amp; Krathwohl, 2001 (revised Bloom's)</td></tr>
+        <tr><td>02 → 03 seam</td><td>Constructive alignment — objective, task, and assessment share one verb.</td><td>Biggs, 1996</td></tr>
+        <tr><td>03 Assessment</td><td>Formative checks change outcomes more than summative design alone.</td><td>Black &amp; Wiliam, 1998</td></tr>
+        <tr><td>03 Assessment</td><td>Formative vs. summative assessment — definitions, benefits, examples.</td><td>Poorvu Center for Teaching and Learning, Yale University</td></tr>
+        <tr><td>04 Activity</td><td>Three components of active learning: Information &amp; Ideas, Experience, Reflective Dialogue.</td><td>Fink, 2003</td></tr>
+        <tr><td>04 Activity — build</td><td>Cognitive load: new schemas need direct instruction before practice.</td><td>Sweller, 1988</td></tr>
+        <tr><td>04 Activity — rehearse</td><td>Gradual release of responsibility ("I do, we do, you do").</td><td>Pearson &amp; Gallagher, 1983</td></tr>
+        <tr><td>04 Activity — rehearse</td><td>Retrieval / testing effect; desirable difficulties; spacing beats cramming.</td><td>Roediger &amp; Karpicke, 2006 · Bjork &amp; Bjork, 2011 · Cepeda et al., 2006</td></tr>
+        <tr><td>04 Activity — check</td><td>Self-testing is among the highest-utility learning strategies studied.</td><td>Dunlosky et al., 2013 · Zimmerman, 2002</td></tr>
+        <tr><td>Feedback, throughout</td><td>Feedback works best aimed at task, process, or self-regulation — not just correctness.</td><td>Hattie &amp; Timperley, 2007</td></tr>
+      </tbody>
+    </table>
+
+    <p class="minilbl" style="margin-top:20px;">Full reference list (APA 7th edition)</p>
+    <ul style="font-size:13px; line-height:1.8; color:var(--ink);">
+      <li style="padding-left:0;">Anderson, L. W., &amp; Krathwohl, D. R. (Eds.). (2001). <i>A taxonomy for learning, teaching, and assessing: A revision of Bloom's taxonomy of educational objectives.</i> Longman.</li>
+      <li style="padding-left:0;">Biggs, J. (1996). Enhancing teaching through constructive alignment. <i>Higher Education, 32</i>(3), 347–364. https://doi.org/10.1007/BF00138871</li>
+      <li style="padding-left:0;">Bjork, E. L., &amp; Bjork, R. A. (2011). Making things hard on yourself, but in a good way: Creating desirable difficulties to enhance learning. In M. A. Gernsbacher, R. W. Pew, L. M. Hough, &amp; J. R. Pomerantz (Eds.), <i>Psychology and the real world: Essays illustrating fundamental contributions to society</i> (pp. 56–64). Worth Publishers.</li>
+      <li style="padding-left:0;">Black, P., &amp; Wiliam, D. (1998). Assessment and classroom learning. <i>Assessment in Education: Principles, Policy &amp; Practice, 5</i>(1), 7–74. https://doi.org/10.1080/0969595980050102</li>
+      <li style="padding-left:0;">Bloom, B. S. (Ed.). (1956). <i>Taxonomy of educational objectives: The classification of educational goals. Handbook I: Cognitive domain.</i> Longman.</li>
+      <li style="padding-left:0;">Cepeda, N. J., Pashler, H., Vul, E., Wixted, J. T., &amp; Rohrer, D. (2006). Distributed practice in verbal recall tasks: A review and quantitative synthesis. <i>Psychological Bulletin, 132</i>(3), 354–380. https://doi.org/10.1037/0033-2909.132.3.354</li>
+      <li style="padding-left:0;">Dunlosky, J., Rawson, K. A., Marsh, E. J., Nathan, M. J., &amp; Willingham, D. T. (2013). Improving students' learning with effective learning techniques: Promising directions from cognitive and educational psychology. <i>Psychological Science in the Public Interest, 14</i>(1), 4–58. https://doi.org/10.1177/1529100612453266</li>
+      <li style="padding-left:0;">Fink, L. D. (2003). <i>Creating significant learning experiences: An integrated approach to designing college courses.</i> Jossey-Bass.</li>
+      <li style="padding-left:0;">Harden, R. M. (2002). Learning outcomes and instructional objectives: Is there a difference? <i>Medical Teacher, 24</i>(2), 151–155. https://doi.org/10.1080/0142159022020687</li>
+      <li style="padding-left:0;">Hattie, J., &amp; Timperley, H. (2007). The power of feedback. <i>Review of Educational Research, 77</i>(1), 81–112. https://doi.org/10.3102/003465430298487</li>
+      <li style="padding-left:0;">Kennedy, D. (2006). <i>Writing and using learning outcomes: A practical guide.</i> University College Cork.</li>
+      <li style="padding-left:0;">Mager, R. F. (1997). <i>Preparing instructional objectives: A critical tool in the development of effective instruction</i> (3rd ed.). Center for Effective Performance.</li>
+      <li style="padding-left:0;">Pearson, P. D., &amp; Gallagher, M. C. (1983). The instruction of reading comprehension. <i>Contemporary Educational Psychology, 8</i>(3), 317–344.</li>
+      <li style="padding-left:0;">Poorvu Center for Teaching and Learning. (n.d.). <i>Formative &amp; summative assessments.</i> Yale University. https://poorvucenter.yale.edu/teaching/teaching-resource-library/formative-summative-assessments</li>
+      <li style="padding-left:0;">Roediger, H. L., III, &amp; Karpicke, J. D. (2006). Test-enhanced learning: Taking memory tests improves long-term retention. <i>Psychological Science, 17</i>(3), 249–255. https://doi.org/10.1111/j.1467-9280.2006.01693.x</li>
+      <li style="padding-left:0;">Wiggins, G., &amp; McTighe, J. (2005). <i>Understanding by design</i> (2nd ed.). Association for Supervision and Curriculum Development.</li>
+      <li style="padding-left:0;">Zimmerman, B. J. (2002). Becoming a self-regulated learner: An overview. <i>Theory Into Practice, 41</i>(2), 64–70.</li>
+    </ul>
+    <p style="margin:12px 0 0; font-size:13px; color:var(--gray-70);">Every citation above has been checked against a publisher or bibliographic record. If you spot an error, please flag it — accuracy here matters more than polish.</p>
+  </div>
+</div>
+
+<script>
+const SLIDES = [
+  {id:'hero', group:null},
+  {id:'overview', group:'overview'},
+  {id:'out-intro', group:'outcome'},
+  {id:'out-yours', group:'outcome'},
+  {id:'out-seam', group:'outcome'},
+  {id:'obj-intro', group:'objective'},
+  {id:'obj-yours', group:'objective'},
+  {id:'obj-seam', group:'objective'},
+  {id:'assess-intro', group:'assessment'},
+  {id:'assess-yours', group:'assessment'},
+  {id:'assess-seam', group:'assessment'},
+  {id:'act-intro', group:'activity'},
+  {id:'act-yours', group:'activity'},
+  {id:'act-seam', group:'activity'},
+  {id:'final-check', group:'review'},
+  {id:'synthesis', group:'synthesis'},
+];
+const RAIL_GROUPS = [
+  {group:'overview', label:'Overview', jump:'overview'},
+  {group:'outcome', label:'01 · Learning Outcome', jump:'out-intro'},
+  {group:'objective', label:'02 · Learning Objective', jump:'obj-intro'},
+  {group:'assessment', label:'03 · Assessment', jump:'assess-intro'},
+  {group:'activity', label:'04 · Learning Activity', jump:'act-intro'},
+  {group:'review', label:'Final check', jump:'final-check'},
+  {group:'synthesis', label:'Your chain', jump:'synthesis'},
+];
+
+function buildRail(){
+  const nav = document.getElementById('railnav');
+  nav.innerHTML = '';
+  RAIL_GROUPS.forEach(g=>{
+    const div = document.createElement('div');
+    div.className = 'rail-item';
+    div.dataset.group = g.group;
+    div.innerHTML = `<span class="dot"></span>${g.label}`;
+    div.onclick = ()=> goTo(g.jump);
+    nav.appendChild(div);
+  });
+}
+
+let current = 0;
+let reviewMode = false;
+
+function idx(id){ return SLIDES.findIndex(s=>s.id===id); }
+function render(){
+  document.querySelectorAll('.slide').forEach(el=>el.classList.remove('active'));
+  const s = SLIDES[current];
+  document.querySelector(`.slide[data-slide="${s.id}"]`).classList.add('active');
+
+  document.getElementById('crumb').innerHTML = `Step <b>${current+1}</b> of <b>${SLIDES.length}</b>`;
+  document.getElementById('progressfill').style.width = ((current)/(SLIDES.length-1)*100)+'%';
+
+  document.querySelectorAll('.rail-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.group === s.group);
+  });
+
+  document.body.classList.toggle('review-mode', reviewMode);
+
+  document.getElementById('backbtn').disabled = current === 0;
+  const nextbtn = document.getElementById('nextbtn');
+  if(current === SLIDES.length - 1){
+    nextbtn.textContent = 'Restart from the top ↺';
+  } else if(s.id === 'hero'){
+    nextbtn.textContent = 'See the whole chain →';
+  } else if(s.id === 'overview'){
+    nextbtn.textContent = 'Start the tour →';
+  } else {
+    nextbtn.textContent = 'Continue →';
+  }
+
+  document.getElementById('viewport').scrollTop = 0;
+  refreshAll();
+}
+
+function goTo(id, isReview){ reviewMode = !!isReview; current = idx(id); render(); }
+function nextSlide(){
+  reviewMode = false;
+  if(current === SLIDES.length - 1){ current = 0; } else { current = Math.min(current+1, SLIDES.length-1); }
+  render();
+}
+function prevSlide(){ reviewMode = false; current = Math.max(current-1, 0); render(); }
+
+
+function autoGrow(el){
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight) + 'px';
+}
+function revealStep(btn){
+  const content = btn.nextElementSibling;
+  const opening = !content.classList.contains('shown');
+  content.classList.toggle('shown');
+  btn.classList.toggle('done', opening);
+}
+function revealSeam(btn){
+  const ans = btn.nextElementSibling;
+  ans.classList.toggle('show');
+}
+
+function setBenchFilter(f){
+  document.querySelectorAll('.bf').forEach(b=> b.classList.toggle('active', b.dataset.f === f));
+  document.querySelectorAll('#benchTable tbody tr').forEach(tr=>{
+    const bands = (tr.dataset.band || '').split(' ');
+    tr.style.display = (f === 'all' || bands.includes(f)) ? '' : 'none';
+  });
+}
+document.querySelectorAll('.bf').forEach(b=> b.onclick = ()=> setBenchFilter(b.dataset.f));
+
+function openBench(){
+  const s = SLIDES[current];
+  const f = (s && ['outcome','objective','assessment','activity'].includes(s.group)) ? s.group : 'all';
+  setBenchFilter(f);
+  document.getElementById('benchModal').classList.add('show');
+}
+function closeBench(){ document.getElementById('benchModal').classList.remove('show'); }
+document.getElementById('benchModal').addEventListener('click', (e)=>{ if(e.target.id==='benchModal') closeBench(); });
+
+function openBloom(){ document.getElementById('bloomModal').classList.add('show'); }
+function closeBloom(){ document.getElementById('bloomModal').classList.remove('show'); }
+document.getElementById('bloomModal').addEventListener('click', (e)=>{ if(e.target.id==='bloomModal') closeBloom(); });
+
+function openEvidence(){ document.getElementById('evidenceModal').classList.add('show'); }
+function closeEvidence(){ document.getElementById('evidenceModal').classList.remove('show'); }
+document.getElementById('evidenceModal').addEventListener('click', (e)=>{ if(e.target.id==='evidenceModal') closeEvidence(); });
+
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeBench(); closeBloom(); closeEvidence(); } });
+
+const FIELDS = ['f-outcome','f-verb','f-goal','f-method','f-context','f-assess','f-act1','f-act2','f-act3'];
+const STORE_KEY = 'alignmentMapWorksheet_v3';
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function saveWorksheet(){
+  const data = {};
+  FIELDS.forEach(id=>{ data[id] = val(id); });
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(data)); }catch(e){}
+  const s = document.getElementById('savestate');
+  if(s){ s.textContent = 'saved just now'; clearTimeout(window._saveTimer); window._saveTimer = setTimeout(()=>{ s.textContent = 'saved locally'; }, 1500); }
+}
+function loadWorksheet(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    FIELDS.forEach(id=>{ const el = document.getElementById(id); if(el && data[id]){ el.value = data[id]; autoGrow(el); } });
+  }catch(e){}
+}
+function getChainHTML(){
+  const outcome = val('f-outcome') || '(not written)';
+  const v=val('f-verb'), g=val('f-goal'), m=val('f-method'), c=val('f-context');
+  const objective = (v || g || m || c)
+    ? `Students will ${v||'___'} ${g||'___'}${m?` by ${m}`:''}${c?`, ${c}.`:'.'}`
+    : '(not written)';
+  const assess = val('f-assess') || '(not written)';
+  const a1=val('f-act1'), a2=val('f-act2'), a3=val('f-act3');
+  const activityParts = [a1 && `Build: ${a1}`, a2 && `Rehearse: ${a2}`, a3 && `Check: ${a3}`].filter(Boolean);
+  const activity = activityParts.length ? activityParts.join(' | ') : '(not written)';
+  const today = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+
+  const esc2 = (s)=> String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>My Learning Alignment Chain</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @page{ size:letter; margin:0.6in; }
+  *{box-sizing:border-box;}
+  body{font-family:Georgia,'Times New Roman',serif; color:#191c1a; margin:0; padding:0.5in 0.6in; max-width:7.5in;}
+  .head{display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:4px;}
+  .brand{font-family:Arial,Helvetica,sans-serif; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#63666A;}
+  .brand b{color:#000;}
+  .date{font-family:Arial,Helvetica,sans-serif; font-size:10px; color:#63666A;}
+  h1{font-size:18px; font-weight:normal; font-style:italic; margin:6px 0 14px; color:#191c1a;}
+  .row{display:grid; grid-template-columns:1.1in 1fr; gap:10px; padding:9px 0; border-bottom:1px solid #e5e7e3; align-items:start;}
+  .row:last-of-type{border-bottom:none;}
+  .tag{font-family:Arial,Helvetica,sans-serif; font-size:9.5px; letter-spacing:.05em; text-transform:uppercase; font-weight:bold; padding:3px 7px; border-radius:3px; display:inline-block; white-space:nowrap;}
+  .t1{background:#ececea; color:#3a3a35;} .t2{background:#f4ecd8; color:#5b4522;}
+  .t3{background:#dcebf5; color:#0b3f5c;} .t4{background:#e4f0e2; color:#1d4a21;}
+  .txt{font-size:13px; line-height:1.45; overflow-wrap:anywhere; word-wrap:break-word; white-space:pre-wrap;}
+  .foot{margin-top:16px; padding-top:8px; border-top:1px solid #cbcec9; font-family:Arial,Helvetica,sans-serif; font-size:9px; color:#97999B;}
+  @media print{ body{padding:0;} }
+</style></head>
+<body>
+  <div class="head">
+    <span class="brand"><b>Purdue Fort Wayne</b> · CELT</span>
+    <span class="date">${today}</span>
+  </div>
+  <h1>My learning alignment chain</h1>
+  <div class="row"><span class="tag t1">Outcome</span><div class="txt">${esc2(outcome)}</div></div>
+  <div class="row"><span class="tag t2">Objective</span><div class="txt">${esc2(objective)}</div></div>
+  <div class="row"><span class="tag t3">Assessment</span><div class="txt">${esc2(assess)}</div></div>
+  <div class="row"><span class="tag t4">Activity</span><div class="txt">${esc2(activity)}</div></div>
+  <div class="foot">Generated with the CELT Learning Alignment Map, Center for the Enhancement of Learning &amp; Teaching, Purdue University Fort Wayne.</div>
+</body></html>`;
+}
+
+function downloadChain(){
+  const html = getChainHTML();
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'my-learning-alignment-chain.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+}
+
+function printChain(){
+  const html = getChainHTML();
+  let iframe = document.getElementById('printFrame');
+  if(!iframe){
+    iframe = document.createElement('iframe');
+    iframe.id = 'printFrame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+  }
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  let printed = false;
+  const doPrint = ()=>{
+    if(printed) return;
+    printed = true;
+    try{
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }catch(e){
+      alert('This browser blocked the print view. Try the "Download your chain" button instead, then print or save as PDF from the downloaded file.');
+    }
+  };
+  iframe.onload = doPrint;
+  setTimeout(doPrint, 400);
+}
+
+function clearWorksheet(){
+  if(!confirm('Clear everything you\'ve written on this page? This cannot be undone.')) return;
+  FIELDS.forEach(id=>{ const el = document.getElementById(id); if(el){ el.value=''; el.style.height='auto'; } });
+  try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  refreshAll();
+}
+
+function updateSentence(){
+  const box = document.getElementById('livesentence');
+  if(!box) return;
+  const v = val('f-verb'), g = val('f-goal'), m = val('f-method'), c = val('f-context');
+  if(!v && !g && !m && !c){ box.innerHTML = 'Students will…'; return; }
+  let out = 'Students will ';
+  out += v ? `<span class="filled slotv">${esc(v)}</span> ` : '<span>___</span> ';
+  out += g ? `<span class="filled slotg">${esc(g)}</span> ` : '<span>___</span> ';
+  out += m ? `by <span class="filled slotm">${esc(m)}</span>` : 'by <span>___</span>';
+  out += c ? `, <span class="filled slotc">${esc(c)}</span>.` : '.';
+  box.innerHTML = out;
+}
+
+function refreshSeamBindings(){
+  document.querySelectorAll('[data-bind-wrap]').forEach(el=>{
+    const key = el.getAttribute('data-bind-wrap');
+    let text;
+    if(key === 'outcome'){
+      text = val('f-outcome') || 'this outcome';
+    } else if(key === 'verb2'){
+      text = val('f-verb') ? `"${val('f-verb')}"` : 'the verb in your objective';
+    } else if(key === 'verb3'){
+      text = val('f-verb') ? `"${val('f-verb')}"` : 'the action in your objective';
+    } else if(key === 'assess4'){
+      text = val('f-assess') || 'this exact move';
+    }
+    el.textContent = text;
+  });
+}
+
+function refreshSynthesis(){
+  const oEl = document.getElementById('s-outcome');
+  if(!oEl) return;
+  const outcome = val('f-outcome');
+  const v=val('f-verb'), g=val('f-goal'), m=val('f-method'), c=val('f-context');
+  const assess = val('f-assess');
+  const a1=val('f-act1'), a2=val('f-act2'), a3=val('f-act3');
+
+  oEl.textContent = outcome || 'Not written yet — go back to band 01.';
+  oEl.classList.toggle('placeholder', !outcome);
+
+  const objEl = document.getElementById('s-objective');
+  if(v || g || m || c){
+    objEl.innerHTML = `Students will ${v?`<b>${esc(v)}</b>`:'___'} ${g?esc(g):'___'} ${m?`by ${esc(m)}`:''}${c?`, ${esc(c)}.`:'.'}`;
+    objEl.classList.remove('placeholder');
+  } else { objEl.textContent = 'Not written yet — go back to band 02.'; objEl.classList.add('placeholder'); }
+
+  const asEl = document.getElementById('s-assess');
+  asEl.textContent = assess || 'Not written yet — go back to band 03.';
+  asEl.classList.toggle('placeholder', !assess);
+
+  const actEl = document.getElementById('s-activity');
+  if(a1 || a2 || a3){
+    actEl.innerHTML = [a1 && `Build: ${esc(a1)}`, a2 && `Rehearse: ${esc(a2)}`, a3 && `Check: ${esc(a3)}`].filter(Boolean).join('<br>');
+    actEl.classList.remove('placeholder');
+  } else { actEl.textContent = 'Not written yet — go back to band 04.'; actEl.classList.add('placeholder'); }
+}
+
+function refreshAll(){ updateSentence(); refreshSeamBindings(); refreshSynthesis(); }
+
+FIELDS.forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', ()=>{ refreshAll(); saveWorksheet(); });
+});
+
+buildRail();
+loadWorksheet();
+render();
+</script>
+</body>
+</html>
